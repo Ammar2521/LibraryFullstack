@@ -9,6 +9,7 @@ Projektet består av en ASP.NET Core Web API-backend och en React-frontend. Appl
 * Visa alla böcker
 * Visa kategorier
 * Logga in med JWT
+* Admin kan ändra böcker
 * Rollbaserad behörighet
 * Admin kan lägga till böcker
 * Admin kan ta bort böcker
