@@ -6,6 +6,7 @@ function App() {
     const [books, setBooks] = useState([])
     const [categories, setCategories] = useState([])
     const [loans, setLoans] = useState([])
+
     const [username, setUsername] = useState('admin')
     const [password, setPassword] = useState('admin123')
     const [token, setToken] = useState('')
@@ -20,6 +21,8 @@ function App() {
         categoryId: 1,
         isAvailable: true
     })
+
+    const [editingBook, setEditingBook] = useState(null)
 
     useEffect(() => {
         loadBooks()
@@ -46,7 +49,7 @@ function App() {
         })
 
         if (!response.ok) {
-            setMessage('Fel anva ndarnamn eller losenord')
+            setMessage('Fel anvandarnamn eller losenord')
             return
         }
 
@@ -71,7 +74,7 @@ function App() {
         })
 
         if (!response.ok) {
-            setMessage('Du ma ste vara admin for att Lagga till bok')
+            setMessage('Du maste vara admin for att lagga till bok')
             return
         }
 
@@ -88,6 +91,46 @@ function App() {
         loadBooks()
     }
 
+    function startEdit(book) {
+        setEditingBook({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            year: book.year,
+            genre: book.genre,
+            categoryId: book.categoryId,
+            isAvailable: book.isAvailable
+        })
+    }
+
+    async function updateBook() {
+        const response = await fetch(`${API_URL}/books/${editingBook.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                id: editingBook.id,
+                title: editingBook.title,
+                author: editingBook.author,
+                year: Number(editingBook.year),
+                genre: editingBook.genre,
+                categoryId: Number(editingBook.categoryId),
+                isAvailable: editingBook.isAvailable
+            })
+        })
+
+        if (!response.ok) {
+            setMessage('Du maste vara admin for att andra bok')
+            return
+        }
+
+        setEditingBook(null)
+        setMessage('Bok andrad')
+        loadBooks()
+    }
+
     async function deleteBook(id) {
         const response = await fetch(`${API_URL}/books/${id}`, {
             method: 'DELETE',
@@ -97,7 +140,7 @@ function App() {
         })
 
         if (!response.ok) {
-            setMessage('Du ma ste vara admin for att ta bort bok')
+            setMessage('Du maste vara admin for att ta bort bok')
             return
         }
 
@@ -119,11 +162,11 @@ function App() {
         })
 
         if (!response.ok) {
-            setMessage('Du ma ste vara inloggad och boken ma ste vara tillga nglig')
+            setMessage('Du maste vara inloggad och boken maste vara tillganglig')
             return
         }
 
-        setMessage('Bok Lanad')
+        setMessage('Bok lanad')
         loadBooks()
         loadLoans()
     }
@@ -157,7 +200,7 @@ function App() {
             return
         }
 
-        setMessage('Bok a terla mnad')
+        setMessage('Bok aterlamnad')
         loadBooks()
         loadLoans()
     }
@@ -171,10 +214,11 @@ function App() {
 
             <h2>Logga in</h2>
             <input
-                placeholder="Anva ndarnamn"
+                placeholder="Anvandarnamn"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
             />
+
             <input
                 placeholder="Losenord"
                 type="password"
@@ -182,30 +226,97 @@ function App() {
                 onChange={(e) => setPassword(e.target.value)}
                 style={{ marginLeft: '10px' }}
             />
-            <button onClick={login} style={{ marginLeft: '10px' }}>Logga in</button>
+
+            <button onClick={login} style={{ marginLeft: '10px' }}>
+                Logga in
+            </button>
 
             <p><b>{message}</b></p>
 
             <hr />
 
             <h2>Bocker</h2>
+
             {books.map(book => (
                 <div key={book.id} style={{ border: '1px solid gray', padding: '10px', marginBottom: '10px' }}>
                     <h3>{book.title}</h3>
                     <p>Forfattare: {book.author}</p>
                     <p>Ar: {book.year}</p>
                     <p>Genre: {book.genre}</p>
-                    <p>Status: {book.isAvailable ? 'Tillga nglig' : 'UtLanad'}</p>
+                    <p>Status: {book.isAvailable ? 'Tillganglig' : 'Utlanad'}</p>
 
-                    <button onClick={() => borrowBook(book.id)}>Lana bok</button>
+                    <button onClick={() => borrowBook(book.id)}>
+                        Lana bok
+                    </button>
 
                     {role === 'Admin' && (
-                        <button onClick={() => deleteBook(book.id)} style={{ marginLeft: '10px' }}>
-                            Ta bort
-                        </button>
+                        <>
+                            <button onClick={() => startEdit(book)} style={{ marginLeft: '10px' }}>
+                                Andra
+                            </button>
+
+                            <button onClick={() => deleteBook(book.id)} style={{ marginLeft: '10px' }}>
+                                Ta bort
+                            </button>
+                        </>
                     )}
                 </div>
             ))}
+
+            {role === 'Admin' && editingBook && (
+                <>
+                    <hr />
+
+                    <h2>Andra bok (Admin)</h2>
+
+                    <input
+                        placeholder="Titel"
+                        value={editingBook.title}
+                        onChange={(e) => setEditingBook({ ...editingBook, title: e.target.value })}
+                    />
+
+                    <input
+                        placeholder="Forfattare"
+                        value={editingBook.author}
+                        onChange={(e) => setEditingBook({ ...editingBook, author: e.target.value })}
+                        style={{ marginLeft: '10px' }}
+                    />
+
+                    <input
+                        placeholder="Ar"
+                        value={editingBook.year}
+                        onChange={(e) => setEditingBook({ ...editingBook, year: e.target.value })}
+                        style={{ marginLeft: '10px' }}
+                    />
+
+                    <input
+                        placeholder="Genre"
+                        value={editingBook.genre}
+                        onChange={(e) => setEditingBook({ ...editingBook, genre: e.target.value })}
+                        style={{ marginLeft: '10px' }}
+                    />
+
+                    <select
+                        value={editingBook.categoryId}
+                        onChange={(e) => setEditingBook({ ...editingBook, categoryId: e.target.value })}
+                        style={{ marginLeft: '10px' }}
+                    >
+                        {categories.map(category => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <button onClick={updateBook} style={{ marginLeft: '10px' }}>
+                        Spara andring
+                    </button>
+
+                    <button onClick={() => setEditingBook(null)} style={{ marginLeft: '10px' }}>
+                        Avbryt
+                    </button>
+                </>
+            )}
 
             <hr />
 
@@ -270,7 +381,10 @@ function App() {
             <hr />
 
             <h2>Lan</h2>
-            <button onClick={loadLoans}>Visa Lan</button>
+
+            <button onClick={loadLoans}>
+                Visa lan
+            </button>
 
             {loans.map(loan => (
                 <div key={loan.id} style={{ border: '1px solid gray', padding: '10px', marginTop: '10px' }}>
@@ -281,7 +395,7 @@ function App() {
 
                     {!loan.returnDate && (
                         <button onClick={() => returnBook(loan.id)}>
-                            La mna tillbaka
+                            Lamna tillbaka
                         </button>
                     )}
                 </div>
@@ -290,4 +404,4 @@ function App() {
     )
 }
 
-export default App
+export default App 
