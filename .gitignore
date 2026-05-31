@@ -1,0 +1,7 @@
+﻿.vs/
+**/bin/
+**/obj/
+library-frontend/node_modules/
+library-frontend/dist/
+*.user
+*.db
